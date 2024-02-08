@@ -51,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Context
+import android.widget.Toast
 
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.ui.text.style.TextAlign
@@ -65,71 +66,77 @@ import com.abbas.mycontacts.ui.theme.MycontactsTheme
 
 data class Contact(val name: String, val number: String)
 
-val randomContacts = List(10) {
-    Contact(
-        "Name ${it + 1}",
-        "1234567890".substring(0 until it % 9 + 1) + (it * 1000000).toString()
-    )
-}
 
 
 
 
 
+
+// MainActivity class
 class MainActivity : ComponentActivity() {
 
-        private val requestContactsPermissionLauncher =
-               registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-                        handlePermissionsResult(permissions)
-                    }
+    // Permission launcher for requesting contacts permissions
+    private val requestContactsPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            handlePermissionsResult(permissions)
+        }
 
-        override fun onCreate(savedInstanceState: Bundle?) {
-                super.onCreate(savedInstanceState)
-                setContent {
-                        MycontactsTheme {
-                                checkAndRequestContactsPermission()
-                                MainScreen()
+    // onCreate method
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Set content using Compose
+        setContent {
+            MycontactsTheme {
+                // Check and request contacts permission
+                checkAndRequestContactsPermission()
+                // Display the main screen
+                MainScreen()
             }
-                    }
-          }
-
-        private fun checkAndRequestContactsPermission() {
-                val permissionsToRequest = mutableMapOf<String, Boolean>()
-
-                if (ContextCompat.checkSelfPermission(
-                                this,
-                                Manifest.permission.READ_CONTACTS
-                                    ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        permissionsToRequest[Manifest.permission.READ_CONTACTS] = true
-                    }
-
-                if (ContextCompat.checkSelfPermission(
-                                this,
-                                Manifest.permission.WRITE_CONTACTS
-                                    ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        permissionsToRequest[Manifest.permission.WRITE_CONTACTS] = true
-                    }
-
-                if (permissionsToRequest.isNotEmpty()) {
-                        requestContactsPermissionLauncher.launch(permissionsToRequest.keys.toTypedArray())
-                    }
-          }
-
-        private fun handlePermissionsResult(permissions: Map<String, Boolean>) {
-                if (permissions[Manifest.permission.READ_CONTACTS] == true &&
-                        permissions[Manifest.permission.WRITE_CONTACTS] == true
-                    ) {
-                        // Permissions are granted, you can proceed with fetching or adding contacts
-                    } else {
-                        // Permission is denied, handle accordingly (e.g., show a message or disable features)
-                    }
         }
     }
 
+    // Function to check and request contacts permission
+    private fun checkAndRequestContactsPermission() {
+        val permissionsToRequest = mutableMapOf<String, Boolean>()
 
+        // Check for READ_CONTACTS permission
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.READ_CONTACTS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsToRequest[Manifest.permission.READ_CONTACTS] = true
+        }
 
+        // Check for WRITE_CONTACTS permission
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_CONTACTS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionsToRequest[Manifest.permission.WRITE_CONTACTS] = true
+        }
+
+        // Request permissions if needed
+        if (permissionsToRequest.isNotEmpty()) {
+            requestContactsPermissionLauncher.launch(permissionsToRequest.keys.toTypedArray())
+        }
+    }
+
+    // Function to handle the result of permission request
+    private fun handlePermissionsResult(permissions: Map<String, Boolean>) {
+        if (permissions[Manifest.permission.READ_CONTACTS] == true &&
+            permissions[Manifest.permission.WRITE_CONTACTS] == true
+        ) {
+            // Permissions are granted, you can proceed with fetching or adding contacts
+        } else {
+            // Display a message when contacts permission is not granted
+            Toast.makeText(this, "You need to grant contacts permission to use this feature", Toast.LENGTH_SHORT).show()
+               }
+    }
+
+}
+// Composable function for the main screen
 @Composable
 fun MainScreen() {
     val context = LocalContext.current
@@ -138,11 +145,14 @@ fun MainScreen() {
     val number = remember { mutableStateOf("") }
     val errorMessage = remember { mutableStateOf("") }
 
+    // UI layout using Compose
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Text field for entering contact name
             TextField(value = name.value, onValueChange = { name.value = it }, label = { Text("Contact Name") })
             Spacer(modifier = Modifier.height(8.dp))
-           // TextField(value = number.value, onValueChange = { number.value = it }, label = { Text("Contact No") })
+
+            // Text field for entering contact number with validation
             TextField(
                 value = number.value,
                 onValueChange = {
@@ -154,6 +164,8 @@ fun MainScreen() {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Buttons for loading and saving contacts
             Row {
                 Button(onClick = { contacts.addAll(fetchContacts(context)) }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Yellow)) {
                     Text("Load", color = Color.Black)
@@ -172,10 +184,14 @@ fun MainScreen() {
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Display error message if any
             if (errorMessage.value.isNotBlank()) {
                 Text(text = errorMessage.value, color = Color.Red)
             }
-            Text("Contacts:", style = TextStyle( fontSize = 20.sp, fontWeight = FontWeight.Bold),
+
+            // Display contacts
+            Text("Contacts:", style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold),
                 textAlign = TextAlign.Left )
 
             contacts.forEach { contact ->
@@ -184,6 +200,7 @@ fun MainScreen() {
         }
     }
 }
+
 
 
 
@@ -218,28 +235,6 @@ fun addContact(context: Context, name: String, number: String) {
 
 
 
-//@Composable
-//fun MainScreen() {
-//    // ... existing code ...
-//
-//    Column(modifier = Modifier.padding(16.dp)) {
-//        // ... existing UI code ...
-//
-//        TextField(
-//            value = number.value,
-//            onValueChange = {
-//                if (it.all { char -> char.isDigit() } && it.length <= 10) {
-//                    number.value = it
-//                }
-//            },
-//            label = { Text("Contact No") },
-//            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-//        )
-//
-//        // ... existing UI code ...
-//    }
-//}
-//
 
 fun fetchContacts(context: Context): List<Contact> {
     val contacts = mutableListOf<Contact>()
