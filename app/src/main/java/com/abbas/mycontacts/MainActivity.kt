@@ -24,6 +24,7 @@ import android.content.ContentValues
 import android.net.Uri
 import android.provider.ContactsContract
 import android.Manifest
+import android.content.ContentUris
 import android.content.pm.PackageManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.lazy.items
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import android.content.Context
 
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.ui.text.style.TextAlign
 
 import com.abbas.mycontacts.Contacts
 
@@ -149,6 +151,7 @@ fun MainScreen() {
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(onClick = {
                     if (name.value.isNotBlank() && number.value.isNotBlank()) {
+                        addContact(context, name.value, number.value)
                         contacts.add(Contact(name.value, number.value))
                         errorMessage.value = ""
                     } else {
@@ -162,14 +165,46 @@ fun MainScreen() {
             if (errorMessage.value.isNotBlank()) {
                 Text(text = errorMessage.value, color = Color.Red)
             }
+            Text("Contacts:", style = TextStyle( fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.Left )
+
             contacts.forEach { contact ->
-                Text(text = "Name: ${contact.name}, Number: ${contact.number}")
+                Text(text = "    ${contact.name}, ${contact.number}")
             }
         }
     }
 }
 
 
+
+fun addContact(context: Context, name: String, number: String) {
+    val contentValues = ContentValues().apply {
+        put(ContactsContract.RawContacts.ACCOUNT_TYPE, null as String?)
+        put(ContactsContract.RawContacts.ACCOUNT_NAME, null as String?)
+    }
+
+    val rawContactUri = context.contentResolver.insert(ContactsContract.RawContacts.CONTENT_URI, contentValues)
+    val rawContactId = ContentUris.parseId(rawContactUri!!)
+
+    // Insert name
+    contentValues.clear()
+    contentValues.apply {
+        put(ContactsContract.Data.RAW_CONTACT_ID, rawContactId)
+        put(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE)
+        put(ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME, name)
+    }
+    context.contentResolver.insert(ContactsContract.Data.CONTENT_URI, contentValues)
+
+    // Insert phone number
+    contentValues.clear()
+    contentValues.apply {
+        put(ContactsContract.Data.RAW_CONTACT_ID, rawContactId)
+        put(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
+        put(ContactsContract.CommonDataKinds.Phone.NUMBER, number)
+        put(ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)
+    }
+    context.contentResolver.insert(ContactsContract.Data.CONTENT_URI, contentValues)
+}
 
 fun fetchContacts(context: Context): List<Contact> {
     val contacts = mutableListOf<Contact>()
