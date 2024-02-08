@@ -142,7 +142,17 @@ fun MainScreen() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             TextField(value = name.value, onValueChange = { name.value = it }, label = { Text("Contact Name") })
             Spacer(modifier = Modifier.height(8.dp))
-            TextField(value = number.value, onValueChange = { number.value = it }, label = { Text("Contact No") })
+           // TextField(value = number.value, onValueChange = { number.value = it }, label = { Text("Contact No") })
+            TextField(
+                value = number.value,
+                onValueChange = {
+                    if (it.all { char -> char.isDigit() } && it.length <= 10) {
+                        number.value = it
+                    }
+                },
+                label = { Text("Contact No") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Row {
                 Button(onClick = { contacts.addAll(fetchContacts(context)) }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Yellow)) {
@@ -205,6 +215,31 @@ fun addContact(context: Context, name: String, number: String) {
     }
     context.contentResolver.insert(ContactsContract.Data.CONTENT_URI, contentValues)
 }
+
+
+
+//@Composable
+//fun MainScreen() {
+//    // ... existing code ...
+//
+//    Column(modifier = Modifier.padding(16.dp)) {
+//        // ... existing UI code ...
+//
+//        TextField(
+//            value = number.value,
+//            onValueChange = {
+//                if (it.all { char -> char.isDigit() } && it.length <= 10) {
+//                    number.value = it
+//                }
+//            },
+//            label = { Text("Contact No") },
+//            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+//        )
+//
+//        // ... existing UI code ...
+//    }
+//}
+//
 
 fun fetchContacts(context: Context): List<Contact> {
     val contacts = mutableListOf<Contact>()
